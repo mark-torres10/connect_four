@@ -16,7 +16,18 @@ const Game = () => {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [scores, setScores] = useState({ Red: 0, Yellow: 0 });
 
+  // New state for game modes
+  const [gameMode, setGameMode] = useState<'2-player' | '1-player'>('2-player');
+  const [humanPlayerColor, setHumanPlayerColor] = useState<'Red' | 'Yellow'>('Red');
+  const [startingPlayer, setStartingPlayer] = useState<'Red' | 'Yellow'>('Red');
+  const [cpuDifficulty, setCpuDifficulty] = useState<'random' | 'ai'>('random'); // For now, both will be random
+
   const gameBoardRef = useRef<HTMLDivElement>(null);
+
+  // Reset game state based on new settings
+  useEffect(() => {
+    handlePlayAgain(); // Reset board and player when settings change
+  }, [gameMode, humanPlayerColor, startingPlayer, cpuDifficulty]);
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
@@ -33,6 +44,31 @@ const Game = () => {
       window.removeEventListener('mousemove', handleMouseMove);
     };
   }, [winner, isDraw]);
+
+  // CPU's turn logic
+  useEffect(() => {
+    if (gameMode === '1-player' && !winner && !isDraw && player !== humanPlayerColor) {
+      // It's CPU's turn
+      const cpuMove = setTimeout(() => {
+        makeCpuMove();
+      }, 500); // Small delay for better UX
+      return () => clearTimeout(cpuMove);
+    }
+  }, [player, gameMode, humanPlayerColor, winner, isDraw]);
+
+  const makeCpuMove = () => {
+    const validCols: number[] = [];
+    for (let col = 0; col < COLS; col++) {
+      if (!board[0][col]) { // Check if column is not full
+        validCols.push(col);
+      }
+    }
+
+    if (validCols.length > 0) {
+      const randomCol = validCols[Math.floor(Math.random() * validCols.length)];
+      handleClick(randomCol);
+    }
+  };
 
   const handleClick = (col: number) => {
     if (winner || board[0][col]) return;
@@ -52,7 +88,7 @@ const Game = () => {
             setWinner(player);
             setScores(prevScores => ({
               ...prevScores,
-              [player]: prevScores[player as keyof typeof prevScores] + 1,
+              [player as keyof typeof prevScores]: prevScores[player as keyof typeof prevScores] + 1,
             }));
           } else if (finalBoard.every(row => row.every(cell => cell))) {
             setIsDraw(true);
@@ -107,24 +143,67 @@ const Game = () => {
 
   const handlePlayAgain = () => {
     setBoard(createEmptyBoard());
-    setPlayer('Red');
+    setPlayer(startingPlayer); // Reset to the chosen starting player
     setWinner(null);
     setIsDraw(false);
   };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-800 text-white">
+      {/* Hovering token */}
       {!winner && !isDraw && (
         <div
           className={`w-14 h-14 rounded-full ${player === 'Red' ? 'bg-red-500' : 'bg-yellow-500'} absolute top-0 left-0 z-10`}
           style={{ transform: `translate(${mousePos.x - 28}px, ${mousePos.y - 28}px)`, pointerEvents: 'none' }}
         ></div>
       )}
+
+      {/* Scoreboard */}
       <div className="absolute top-4 right-4 bg-gray-700 p-4 rounded-lg">
         <h2 className="text-xl font-bold mb-2">Scores</h2>
         <div>Red: {scores.Red}</div>
         <div>Yellow: {scores.Yellow}</div>
       </div>
+
+      {/* Game Settings */}
+      <div className="absolute top-4 left-4 bg-gray-700 p-4 rounded-lg flex flex-col gap-2">
+        <h2 className="text-xl font-bold mb-2">Game Settings</h2>
+        <div>
+          <label className="mr-2">Game Mode:</label>
+          <input type="radio" id="2-player" name="gameMode" value="2-player" checked={gameMode === '2-player'} onChange={() => setGameMode('2-player')} className="mr-1" />
+          <label htmlFor="2-player" className="mr-2">2-Player</label>
+          <input type="radio" id="1-player" name="gameMode" value="1-player" checked={gameMode === '1-player'} onChange={() => setGameMode('1-player')} className="mr-1" />
+          <label htmlFor="1-player">1-Player (vs CPU)</label>
+        </div>
+
+        {gameMode === '1-player' && (
+          <>
+            <div>
+              <label className="mr-2">Your Color:</label>
+              <input type="radio" id="human-red" name="humanColor" value="Red" checked={humanPlayerColor === 'Red'} onChange={() => setHumanPlayerColor('Red')} className="mr-1" />
+              <label htmlFor="human-red" className="mr-2">Red</label>
+              <input type="radio" id="human-yellow" name="humanColor" value="Yellow" checked={humanPlayerColor === 'Yellow'} onChange={() => setHumanPlayerColor('Yellow')} className="mr-1" />
+              <label htmlFor="human-yellow">Yellow</label>
+            </div>
+            <div>
+              <label className="mr-2">CPU Difficulty:</label>
+              <input type="radio" id="cpu-random" name="cpuDifficulty" value="random" checked={cpuDifficulty === 'random'} onChange={() => setCpuDifficulty('random')} className="mr-1" />
+              <label htmlFor="cpu-random" className="mr-2">Random</label>
+              <input type="radio" id="cpu-ai" name="cpuDifficulty" value="ai" checked={cpuDifficulty === 'ai'} onChange={() => setCpuDifficulty('ai')} className="mr-1" />
+              <label htmlFor="cpu-ai">AI (Coming Soon)</label>
+            </div>
+          </>
+        )}
+
+        <div>
+          <label className="mr-2">First Player:</label>
+          <input type="radio" id="first-red" name="firstPlayer" value="Red" checked={startingPlayer === 'Red'} onChange={() => setStartingPlayer('Red')} className="mr-1" />
+          <label htmlFor="first-red" className="mr-2">Red</label>
+          <input type="radio" id="first-yellow" name="firstPlayer" value="Yellow" checked={startingPlayer === 'Yellow'} onChange={() => setStartingPlayer('Yellow')} className="mr-1" />
+          <label htmlFor="first-yellow">Yellow</label>
+        </div>
+      </div>
+
       <h1 className="text-4xl font-bold mb-4">Connect Four</h1>
       <div
         ref={gameBoardRef}
@@ -135,12 +214,14 @@ const Game = () => {
           row.map((cell, colIndex) => (
             <div
               key={`${rowIndex}-${colIndex}`}
+              role="button" // Added role="button" here
               className={`w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center cursor-pointer transition-colors duration-200 ${hoveredCol === colIndex ? 'bg-blue-400' : ''}`}
               onClick={() => handleClick(colIndex)}
               onMouseEnter={() => setHoveredCol(colIndex)}
             >
               {cell && (
                 <div
+                  data-testid="token"
                   className={`w-14 h-14 rounded-full ${cell.player === 'Red' ? 'bg-red-500' : 'bg-yellow-500'} transform transition-transform duration-500 ease-in`}
                   style={{ transform: `translateY(${cell.dropped ? '0px' : '-400px'})` }}
                 ></div>
