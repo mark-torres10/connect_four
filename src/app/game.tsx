@@ -26,6 +26,13 @@ const Game = () => {
   const gameBoardRef = useRef<HTMLDivElement>(null);
   const minimax = useRef(new Minimax());
 
+  const handlePlayAgain = useCallback(() => {
+    setBoard(createEmptyBoard());
+    setPlayer(startingPlayer); // Reset to the chosen starting player
+    setWinner(null);
+    setIsDraw(false);
+  }, [createEmptyBoard, startingPlayer]);
+
   // Reset game state based on new settings
   useEffect(() => {
     console.log('Settings changed, resetting game.');
@@ -151,13 +158,6 @@ const Game = () => {
       return () => clearTimeout(cpuMove);
     }
   }, [player, gameMode, humanPlayerColor, winner, isDraw, cpuDifficulty, board, handleClick]);
-
-  const handlePlayAgain = useCallback(() => {
-    setBoard(createEmptyBoard());
-    setPlayer(startingPlayer); // Reset to the chosen starting player
-    setWinner(null);
-    setIsDraw(false);
-  }, [createEmptyBoard, startingPlayer]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-800 text-white">
