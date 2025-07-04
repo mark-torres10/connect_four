@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Game from './game';
 import { Minimax } from './Minimax/Minimax';
@@ -9,7 +9,7 @@ jest.mock('./Minimax/Minimax', () => {
   return {
     Minimax: jest.fn().mockImplementation(() => {
       return {
-        makeMove: jest.fn((board, player) => {
+        makeMove: jest.fn((board) => {
           // Default mock implementation: return a random valid column
           const COLS = 6;
           const validCols: number[] = [];

@@ -1,17 +1,17 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Minimax } from './Minimax/Minimax';
+import { Minimax, PlayerColor, BoardCell } from './Minimax/Minimax';
 
 const ROWS = 6;
 const COLS = 6;
 
 const Game = () => {
-  const createEmptyBoard = () => Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+  const createEmptyBoard = useCallback(() => Array.from({ length: ROWS }, () => Array<BoardCell>(COLS).fill(null)), []);
 
-  const [board, setBoard] = useState(createEmptyBoard());
-  const [player, setPlayer] = useState('Red');
-  const [winner, setWinner] = useState<string | null>(null);
+  const [board, setBoard] = useState<BoardCell[][]>(createEmptyBoard());
+  const [player, setPlayer] = useState<PlayerColor>('Red');
+  const [winner, setWinner] = useState<PlayerColor | null>(null);
   const [isDraw, setIsDraw] = useState(false);
   const [hoveredCol, setHoveredCol] = useState<number | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -30,7 +30,7 @@ const Game = () => {
   useEffect(() => {
     console.log('Settings changed, resetting game.');
     handlePlayAgain(); // Reset board and player when settings change
-  }, [gameMode, humanPlayerColor, startingPlayer, cpuDifficulty]);
+  }, [gameMode, humanPlayerColor, startingPlayer, cpuDifficulty, handlePlayAgain]);
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
@@ -48,7 +48,7 @@ const Game = () => {
     };
   }, [winner, isDraw]);
 
-  const checkWin = useCallback((board: any[][], player: string) => {
+  const checkWin = useCallback((board: BoardCell[][], player: PlayerColor) => {
     // Check horizontal
     for (let row = 0; row < ROWS; row++) {
       for (let col = 0; col < COLS - 3; col++) {
@@ -86,7 +86,7 @@ const Game = () => {
     }
 
     return false;
-  }, [ROWS, COLS]);
+  }, []);
 
   const handleClick = useCallback((col: number) => {
     if (winner || board[0][col]) return;
@@ -152,12 +152,12 @@ const Game = () => {
     }
   }, [player, gameMode, humanPlayerColor, winner, isDraw, cpuDifficulty, board, handleClick]);
 
-  const handlePlayAgain = () => {
+  const handlePlayAgain = useCallback(() => {
     setBoard(createEmptyBoard());
     setPlayer(startingPlayer); // Reset to the chosen starting player
     setWinner(null);
     setIsDraw(false);
-  };
+  }, [createEmptyBoard, startingPlayer]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-800 text-white">
@@ -248,7 +248,7 @@ const Game = () => {
       )}
       {isDraw && (
         <div className="text-2xl mt-4">
-          It's a draw!
+          It&apos;s a draw!
         </div>
       )}
       {(winner || isDraw) && (

@@ -1,9 +1,12 @@
+export type PlayerColor = 'Red' | 'Yellow';
+export type BoardCell = { player: PlayerColor; dropped: boolean } | null;
+
 export class Minimax {
   private ROWS = 6;
   private COLS = 6;
   private MAX_DEPTH = 4; // Limiting depth for initial testing
 
-  makeMove(board: any[][], player: string): number {
+  makeMove(board: BoardCell[][], player: PlayerColor): number {
     let bestScore = -Infinity;
     let bestMove = -1;
 
@@ -20,7 +23,7 @@ export class Minimax {
     return bestMove;
   }
 
-  private minimax(board: any[][], depth: number, isMaximizingPlayer: boolean, player: string): number {
+  private minimax(board: BoardCell[][], depth: number, isMaximizingPlayer: boolean, player: PlayerColor): number {
     const opponent = player === 'Red' ? 'Yellow' : 'Red';
 
     if (this.checkWin(board, player)) {
@@ -60,7 +63,7 @@ export class Minimax {
     }
   }
 
-  private getNewBoard(board: any[][], col: number, player: string): any[][] | null {
+  private getNewBoard(board: BoardCell[][], col: number, player: PlayerColor): BoardCell[][] | null {
     const newBoard = board.map(row => [...row]);
     for (let row = this.ROWS - 1; row >= 0; row--) {
       if (!newBoard[row][col]) {
@@ -71,7 +74,7 @@ export class Minimax {
     return null; // Column is full
   }
 
-  private checkWin(board: any[][], player: string): boolean {
+  private checkWin(board: BoardCell[][], player: PlayerColor): boolean {
     // Check horizontal
     for (let row = 0; row < this.ROWS; row++) {
       for (let col = 0; col < this.COLS - 3; col++) {
@@ -111,7 +114,7 @@ export class Minimax {
     return false;
   }
 
-  private isBoardFull(board: any[][]): boolean {
+  private isBoardFull(board: BoardCell[][]): boolean {
     for (let row = 0; row < this.ROWS; row++) {
       for (let col = 0; col < this.COLS; col++) {
         if (board[row][col] === null) {
@@ -122,7 +125,7 @@ export class Minimax {
     return true; // All cells are filled, board is full
   }
 
-  private evaluateBoard(board: any[][], player: string): number {
+  private evaluateBoard(board: BoardCell[][], player: PlayerColor): number {
     let score = 0;
     const opponent = player === 'Red' ? 'Yellow' : 'Red';
 
@@ -139,7 +142,7 @@ export class Minimax {
     return score;
   }
 
-  private evaluateLines(board: any[][], player: string, opponent: string): number {
+  private evaluateLines(board: BoardCell[][], player: PlayerColor, opponent: PlayerColor): number {
     let score = 0;
 
     // Check horizontal
@@ -177,7 +180,7 @@ export class Minimax {
     return score;
   }
 
-  private scoreWindow(window: any[], player: string, opponent: string): number {
+  private scoreWindow(window: BoardCell[], player: PlayerColor, opponent: PlayerColor): number {
     let score = 0;
     const playerCount = window.filter(cell => cell?.player === player).length;
     const opponentCount = window.filter(cell => cell?.player === opponent).length;
