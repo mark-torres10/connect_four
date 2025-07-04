@@ -16,6 +16,7 @@ const Game = () => {
   const [hoveredCol, setHoveredCol] = useState<number | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [scores, setScores] = useState({ Red: 0, Yellow: 0 });
+  const [gameStarted, setGameStarted] = useState(false);
 
   // New state for game modes
   const [gameMode, setGameMode] = useState<'2-player' | '1-player'>('2-player');
@@ -31,13 +32,10 @@ const Game = () => {
     setPlayer(startingPlayer); // Reset to the chosen starting player
     setWinner(null);
     setIsDraw(false);
+    setGameStarted(true);
   }, [createEmptyBoard, startingPlayer]);
 
-  // Reset game state based on new settings
-  useEffect(() => {
-    console.log('Settings changed, resetting game.');
-    handlePlayAgain(); // Reset board and player when settings change
-  }, [gameMode, humanPlayerColor, startingPlayer, cpuDifficulty, handlePlayAgain]);
+  
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
@@ -96,7 +94,7 @@ const Game = () => {
   }, []);
 
   const handleClick = useCallback((col: number) => {
-    if (winner || board[0][col]) return;
+    if (!gameStarted || winner || board[0][col]) return;
 
     const newBoard = board.map(row => [...row]);
     for (let row = ROWS - 1; row >= 0; row--) {
@@ -124,7 +122,7 @@ const Game = () => {
         return;
       }
     }
-  }, [board, player, winner, checkWin, setBoard, setPlayer, setScores, setIsDraw]);
+  }, [board, player, winner, checkWin, setBoard, setPlayer, setScores, setIsDraw, gameStarted]);
 
   // CPU's turn logic
   useEffect(() => {
@@ -150,19 +148,20 @@ const Game = () => {
       handleClick(chosenCol);
     };
 
-    if (gameMode === '1-player' && !winner && !isDraw && player !== humanPlayerColor) {
+    if (gameStarted && gameMode === '1-player' && !winner && !isDraw && player !== humanPlayerColor) {
       console.log('It\'s CPU\'s turn.');
       const cpuMove = setTimeout(() => {
         makeCpuMove();
       }, 500);
       return () => clearTimeout(cpuMove);
     }
-  }, [player, gameMode, humanPlayerColor, winner, isDraw, cpuDifficulty, board, handleClick]);
+  }
+  , [gameStarted, gameMode, humanPlayerColor, winner, isDraw, player, cpuDifficulty, board, handleClick]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-800 text-white">
       {/* Hovering token */}
-      {!winner && !isDraw && (
+      {gameStarted && !winner && !isDraw && (
         <div
           className={`w-14 h-14 rounded-full ${player === 'Red' ? 'bg-red-500' : 'bg-yellow-500'} absolute top-0 left-0 z-10`}
           style={{ transform: `translate(${mousePos.x - 28}px, ${mousePos.y - 28}px)`, pointerEvents: 'none' }}
@@ -174,6 +173,12 @@ const Game = () => {
         <h2 className="text-xl font-bold mb-2">Scores</h2>
         <div>Red: {scores.Red}</div>
         <div>Yellow: {scores.Yellow}</div>
+        <button
+          className="mt-2 px-3 py-1 bg-gray-600 text-white rounded-lg text-sm"
+          onClick={() => setScores({ Red: 0, Yellow: 0 })}
+        >
+          Reset Scores
+        </button>
       </div>
 
       {/* Game Settings */}
@@ -201,7 +206,7 @@ const Game = () => {
               <input type="radio" id="cpu-random" name="cpuDifficulty" value="random" checked={cpuDifficulty === 'random'} onChange={() => setCpuDifficulty('random')} className="mr-1" />
               <label htmlFor="cpu-random" className="mr-2">Random</label>
               <input type="radio" id="cpu-ai" name="cpuDifficulty" value="ai" checked={cpuDifficulty === 'ai'} onChange={() => setCpuDifficulty('ai')} className="mr-1" />
-              <label htmlFor="cpu-ai">AI (Coming Soon)</label>
+              <label htmlFor="cpu-ai">AI</label>
             </div>
           </>
         )}
@@ -213,52 +218,55 @@ const Game = () => {
           <input type="radio" id="first-yellow" name="firstPlayer" value="Yellow" checked={startingPlayer === 'Yellow'} onChange={() => setStartingPlayer('Yellow')} className="mr-1" />
           <label htmlFor="first-yellow">Yellow</label>
         </div>
+        <button
+          className="mt-4 px-4 py-2 bg-green-500 text-white rounded-lg"
+          onClick={handlePlayAgain}
+        >
+          Start New Game
+        </button>
       </div>
 
       <h1 className="text-4xl font-bold mb-4">Connect Four</h1>
-      <div
-        ref={gameBoardRef}
-        className="grid grid-cols-6 gap-2 bg-blue-500 p-2 rounded-lg relative"
-        onMouseLeave={() => setHoveredCol(null)}
-      >
-        {board.map((row, rowIndex) =>
-          row.map((cell, colIndex) => (
-            <div
-              key={`${rowIndex}-${colIndex}`}
-              role="button" // Added role="button" here
-              className={`w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center cursor-pointer transition-colors duration-200 ${hoveredCol === colIndex ? 'bg-blue-400' : ''}`}
-              onClick={() => handleClick(colIndex)}
-              onMouseEnter={() => setHoveredCol(colIndex)}
-            >
-              {cell && (
+      {gameStarted && (
+        <>
+          <div
+            ref={gameBoardRef}
+            className="grid grid-cols-6 gap-2 bg-blue-500 p-2 rounded-lg relative"
+            onMouseLeave={() => setHoveredCol(null)}
+          >
+            {board.map((row, rowIndex) =>
+              row.map((cell, colIndex) => (
                 <div
-                  data-testid="token"
-                  className={`w-14 h-14 rounded-full ${cell.player === 'Red' ? 'bg-red-500' : 'bg-yellow-500'} transform transition-transform duration-500 ease-in`}
-                  style={{ transform: `translateY(${cell.dropped ? '0px' : '-400px'})` }}
-                ></div>
-              )}
+                  key={`${rowIndex}-${colIndex}`}
+                  role="button" // Added role="button" here
+                  className={`w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center cursor-pointer transition-colors duration-200 ${hoveredCol === colIndex ? 'bg-blue-400' : ''}`}
+                  onClick={() => handleClick(colIndex)}
+                  onMouseEnter={() => setHoveredCol(colIndex)}
+                >
+                  {cell && (
+                    <div
+                      data-testid="token"
+                      className={`w-14 h-14 rounded-full ${cell.player === 'Red' ? 'bg-red-500' : 'bg-yellow-500'} transform transition-transform duration-500 ease-in`}
+                      style={{ transform: `translateY(${cell.dropped ? '0px' : '-400px'})` }}
+                    ></div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+          {winner && (
+            <div className="text-2xl mt-4">
+              {winner} wins!
             </div>
-          ))
-        )}
-      </div>
-      {winner && (
-        <div className="text-2xl mt-4">
-          {winner} wins!
-        </div>
+          )}
+          {isDraw && (
+            <div className="text-2xl mt-4">
+              It&apos;s a draw!
+            </div>
+          )}
+        </>
       )}
-      {isDraw && (
-        <div className="text-2xl mt-4">
-          It&apos;s a draw!
-        </div>
-      )}
-      {(winner || isDraw) && (
-        <button
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg"
-          onClick={handlePlayAgain}
-        >
-          Play Again
-        </button>
-      )}
+      
     </div>
   );
 };
