@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Minimax } from './Minimax/Minimax';
 
 const ROWS = 6;
 const COLS = 6;
@@ -20,12 +21,14 @@ const Game = () => {
   const [gameMode, setGameMode] = useState<'2-player' | '1-player'>('2-player');
   const [humanPlayerColor, setHumanPlayerColor] = useState<'Red' | 'Yellow'>('Red');
   const [startingPlayer, setStartingPlayer] = useState<'Red' | 'Yellow'>('Red');
-  const [cpuDifficulty, setCpuDifficulty] = useState<'random' | 'ai'>('random'); // For now, both will be random
+  const [cpuDifficulty, setCpuDifficulty] = useState<'random' | 'ai'>('random');
 
   const gameBoardRef = useRef<HTMLDivElement>(null);
+  const minimax = useRef(new Minimax());
 
   // Reset game state based on new settings
   useEffect(() => {
+    console.log('Settings changed, resetting game.');
     handlePlayAgain(); // Reset board and player when settings change
   }, [gameMode, humanPlayerColor, startingPlayer, cpuDifficulty]);
 
@@ -45,63 +48,7 @@ const Game = () => {
     };
   }, [winner, isDraw]);
 
-  // CPU's turn logic
-  useEffect(() => {
-    if (gameMode === '1-player' && !winner && !isDraw && player !== humanPlayerColor) {
-      // It's CPU's turn
-      const cpuMove = setTimeout(() => {
-        makeCpuMove();
-      }, 500); // Small delay for better UX
-      return () => clearTimeout(cpuMove);
-    }
-  }, [player, gameMode, humanPlayerColor, winner, isDraw]);
-
-  const makeCpuMove = () => {
-    const validCols: number[] = [];
-    for (let col = 0; col < COLS; col++) {
-      if (!board[0][col]) { // Check if column is not full
-        validCols.push(col);
-      }
-    }
-
-    if (validCols.length > 0) {
-      const randomCol = validCols[Math.floor(Math.random() * validCols.length)];
-      handleClick(randomCol);
-    }
-  };
-
-  const handleClick = (col: number) => {
-    if (winner || board[0][col]) return;
-
-    const newBoard = board.map(row => [...row]);
-    for (let row = ROWS - 1; row >= 0; row--) {
-      if (!newBoard[row][col]) {
-        newBoard[row][col] = { player, dropped: false };
-        setBoard(newBoard);
-        // Trigger the drop animation
-        setTimeout(() => {
-          const finalBoard = newBoard.map(r => [...r]);
-          finalBoard[row][col] = { player, dropped: true };
-          setBoard(finalBoard);
-
-          if (checkWin(finalBoard, player)) {
-            setWinner(player);
-            setScores(prevScores => ({
-              ...prevScores,
-              [player as keyof typeof prevScores]: prevScores[player as keyof typeof prevScores] + 1,
-            }));
-          } else if (finalBoard.every(row => row.every(cell => cell))) {
-            setIsDraw(true);
-          } else {
-            setPlayer(player === 'Red' ? 'Yellow' : 'Red');
-          }
-        }, 50);
-        return;
-      }
-    }
-  };
-
-  const checkWin = (board: any[][], player: string) => {
+  const checkWin = useCallback((board: any[][], player: string) => {
     // Check horizontal
     for (let row = 0; row < ROWS; row++) {
       for (let col = 0; col < COLS - 3; col++) {
@@ -139,7 +86,71 @@ const Game = () => {
     }
 
     return false;
-  };
+  }, [ROWS, COLS]);
+
+  const handleClick = useCallback((col: number) => {
+    if (winner || board[0][col]) return;
+
+    const newBoard = board.map(row => [...row]);
+    for (let row = ROWS - 1; row >= 0; row--) {
+      if (!newBoard[row][col]) {
+        newBoard[row][col] = { player, dropped: false };
+        setBoard(newBoard);
+        // Trigger the drop animation
+        setTimeout(() => {
+          const finalBoard = newBoard.map(r => [...r]);
+          finalBoard[row][col] = { player, dropped: true };
+          setBoard(finalBoard);
+
+          if (checkWin(finalBoard, player)) {
+            setWinner(player);
+            setScores(prevScores => ({
+              ...prevScores,
+              [player as keyof typeof prevScores]: prevScores[player as keyof typeof prevScores] + 1,
+            }));
+          } else if (finalBoard.every(row => row.every(cell => cell))) {
+            setIsDraw(true);
+          } else {
+            setPlayer(player === 'Red' ? 'Yellow' : 'Red');
+          }
+        }, 50);
+        return;
+      }
+    }
+  }, [board, player, winner, checkWin, setBoard, setPlayer, setScores, setIsDraw]);
+
+  // CPU's turn logic
+  useEffect(() => {
+    console.log('CPU useEffect triggered.', { player, gameMode, humanPlayerColor, winner, isDraw, cpuDifficulty });
+    const makeCpuMove = () => {
+      console.log('makeCpuMove called.', { cpuDifficulty });
+      let chosenCol: number;
+
+      if (cpuDifficulty === 'ai') {
+        chosenCol = minimax.current.makeMove(board, player);
+        console.log('AI chose column:', chosenCol);
+      } else {
+        const validCols: number[] = [];
+        for (let col = 0; col < COLS; col++) {
+          if (!board[0][col]) { // Check if column is not full
+            validCols.push(col);
+          }
+        }
+        chosenCol = validCols[Math.floor(Math.random() * validCols.length)];
+        console.log('Random CPU chose column:', chosenCol);
+      }
+
+      handleClick(chosenCol);
+    };
+
+    if (gameMode === '1-player' && !winner && !isDraw && player !== humanPlayerColor) {
+      console.log('It\'s CPU\'s turn.');
+      const cpuMove = setTimeout(() => {
+        makeCpuMove();
+      }, 500);
+      return () => clearTimeout(cpuMove);
+    }
+  }, [player, gameMode, humanPlayerColor, winner, isDraw, cpuDifficulty, board, handleClick]);
 
   const handlePlayAgain = () => {
     setBoard(createEmptyBoard());
