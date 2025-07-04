@@ -1,36 +1,31 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Connect Four
 
-## Getting Started
+This is a classic Connect Four game built with Next.js and Tailwind CSS.
 
-First, run the development server:
+## Gameplay
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Two players, Red and Yellow, take turns dropping their colored discs into a 7x6 grid. The first player to get four of their discs in a row—horizontally, vertically, or diagonally—wins the game.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## How to Play
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1.  The game will start with an empty board.
+2.  Player 1 (Red) clicks on a column to drop a red disc.
+3.  Player 2 (Yellow) clicks on a column to drop a yellow disc.
+4.  The players continue to take turns until one player achieves four in a row or the board is full, resulting in a draw.
+5.  A message will announce the winner or a draw, and you can start a new game by clicking the "Play Again" button.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Deployment on Vercel
 
-## Learn More
+Deploying this application to Vercel is a simple process.
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1.  **Push to a Git Repository:** Make sure your project is in a Git repository (e.g., on GitHub, GitLab, or Bitbucket).
+2.  **Import Project on Vercel:**
+    *   Go to your Vercel dashboard.
+    *   Click the "Add New..." button and select "Project".
+    *   Import the Git repository that contains your Connect Four project.
+3.  **Configure Project:**
+    *   Vercel will automatically detect that you are using Next.js and configure the build settings for you.
+    *   You do not need to set any environment variables.
+4.  **Deploy:**
+    *   Click the "Deploy" button.
+    *   Vercel will build and deploy your application. You will be provided with a URL to your live site.
