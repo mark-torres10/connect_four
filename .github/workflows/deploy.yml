@@ -1,0 +1,25 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main # Trigger on pushes to the main branch
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest # Use a fresh Ubuntu environment
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4 # Action to checkout your repository code
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4 # Action to set up Node.js environment
+        with:
+          node-version: '20' # Specify the Node.js version
+
+      - name: Install dependencies
+        run: npm install # Install project dependencies
+
+      - name: Run TypeScript Lint
+        run: npm run lint # Execute the lint command defined in package.json
